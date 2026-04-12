@@ -152,51 +152,55 @@
             transform: none;
         }
 
-        /* شعارات البنوك */
+        /* شعارات البنوك (روابط PNG لتعمل بأمان) */
         .bank-logo {
             max-height: 45px;
             object-contain: contain;
-            filter: grayscale(1) brightness(200%); /* لجعل الصور البيضاء تظهر بشكل نقي */
+            filter: grayscale(1) brightness(200%);
         }
 
         /* ----------------------------------------------------------- */
-        /* إعدادات وضع التصوير الصارم للـ PDF (لضمان دقة اللغة العربية والصور) */
+        /* وضع "السكرين شوت الطويلة": إزالة الفواصل وتجهيز العناصر للتصوير */
         /* ----------------------------------------------------------- */
         .pdf-mode {
             background-color: #030303 !important;
         }
+        .pdf-mode #capture-area {
+            background-color: #030303 !important;
+            padding: 0 !important;
+        }
         .pdf-mode .slide {
-            border: none !important; 
+            margin: 0 auto !important; 
+            border-top: none !important;
+            border-bottom: none !important;
             box-shadow: none !important; 
+            border-radius: 0 !important;
             transform: none !important;
         }
-        /* إظهار العناصر المخفية */
+        /* إيقاف مكتبة الحركات لإظهار كل المحتوى فوراً */
         .pdf-mode [data-aos], .pdf-mode .aos-init {
             opacity: 1 !important;
             transform: none !important;
             transition: none !important;
             visibility: visible !important;
         }
-        /* إلغاء تأثيرات النص والمسافات لحماية اللغة العربية من التقطيع */
+        /* علاج اللغة العربية: منع التباعد وتخفيف ظل النيون الذي يشوه الحروف */
         .pdf-mode * {
             animation: none !important;
             letter-spacing: normal !important;
         }
         .pdf-mode .text-neon {
-            text-shadow: none !important; /* إيقاف النيون لأنه يشوه الصورة */
-            color: #D4AF37 !important; /* استبداله بلون صريح */
+            text-shadow: 0 0 5px rgba(212, 175, 55, 0.4) !important;
         }
-        /* علاج مشكلة مربع الـ 3500 ريال (إلغاء الزجاج واستبداله بلون صلب فخم) */
+        /* علاج صندوق الاستثمار (إلغاء الزجاج الفاشل في التصوير، ووضع لون أسود فاخر مكانه) */
         .pdf-mode .backdrop-blur-2xl {
             backdrop-filter: none !important;
-            background-color: #111111 !important;
-            border: 2px solid #D4AF37 !important;
+            background-color: #0a0a0a !important; 
+            border: 1px solid #D4AF37 !important;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.15) !important;
         }
         .pdf-mode .blur-\[60px\] {
-            display: none !important; /* إخفاء هالة الخلفية لأنها تشوش الكانفاس */
-        }
-        .pdf-mode .uppercase, .pdf-mode .font-mono {
-            letter-spacing: 0.1em !important; /* الحروف الانجليزية فقط هي من تأخذ مسافات */
+            display: none !important; /* إخفاء هالة الخلفية لأنها تسبب تشويش للكانفاس */
         }
     </style>
 </head>
@@ -209,8 +213,8 @@
         <button onclick="document.getElementById('fileInput').click()" class="btn-control btn-upload">
             <i class="fa-solid fa-upload"></i> تحديث البيانات
         </button>
-        <!-- زر التحويل إلى صور ثم PDF -->
-        <button onclick="exportToImagePDF()" class="btn-control btn-pdf" id="pdf-btn">
+        <!-- الزر المحدث للقطة الشاشة الطويلة -->
+        <button onclick="exportToLongScreenshotPDF()" class="btn-control btn-pdf" id="pdf-btn">
             <i class="fa-solid fa-file-pdf"></i> حفظ كـ PDF
         </button>
         <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
@@ -229,17 +233,17 @@
                          alt="شعار مؤسسة المنى" crossorigin="anonymous" class="w-96 mx-auto drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]">
                 </div>
                 
-                <p class="text-gold-500 text-sm font-bold mb-8 uppercase text-neon tracking-[0.9em]" id="sub-title">Excellence In Digital Marketing</p>
-                <h1 class="text-7xl font-black font-heading mb-16 text-neon tracking-tight" id="main-title">عرض سعر استراتيجي</h1>
+                <p class="text-gold-500 text-sm font-bold mb-8 uppercase text-neon" style="letter-spacing: 0.5em;" id="sub-title">Excellence In Digital Marketing</p>
+                <h1 class="text-7xl font-black font-heading mb-16 text-neon" id="main-title">عرض سعر استراتيجي</h1>
                 
                 <div class="flex justify-center items-center gap-20 border-t border-gold-500/10 pt-12">
                     <div class="text-right">
-                        <p class="text-gray-600 text-[11px] uppercase font-bold mb-2 tracking-[0.3em]">Client Name</p>
+                        <p class="text-gray-600 text-[11px] uppercase font-bold mb-2" style="letter-spacing: 0.2em;">Client Name</p>
                         <p class="text-3xl font-bold text-white font-heading text-neon" id="client-name">المحامي بكر صبحي</p>
                     </div>
                     <div class="w-px h-16 bg-gold-500/30"></div>
                     <div class="text-right">
-                        <p class="text-gray-600 text-[11px] uppercase font-bold mb-2 tracking-[0.3em]">Proposal Date</p>
+                        <p class="text-gray-600 text-[11px] uppercase font-bold mb-2" style="letter-spacing: 0.2em;">Proposal Date</p>
                         <p class="text-3xl font-bold text-white font-heading text-neon" id="proposal-date">أبريل 2026</p>
                     </div>
                 </div>
@@ -254,7 +258,7 @@
                     <div class="mb-10">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-16 h-[2px] bg-gold-500 shadow-[0_0_10px_#D4AF37]"></div>
-                            <span class="text-gold-500 font-bold text-sm uppercase text-neon tracking-[0.4em]">Strategic Vision</span>
+                            <span class="text-gold-500 font-bold text-sm uppercase text-neon" style="letter-spacing: 0.2em;">Strategic Vision</span>
                         </div>
                         <h2 class="text-6xl font-heading font-black text-white leading-tight">رؤيتنا <br><span class="text-gold-500 text-neon">الرقمية</span></h2>
                     </div>
@@ -332,7 +336,7 @@
         <div class="slide justify-center items-center text-center">
             <div class="neon-glow-bg w-[700px] h-[700px] opacity-10"></div>
             <div class="relative z-10" data-aos="zoom-in">
-                <p class="text-gray-500 font-bold uppercase mb-12 text-sm tracking-[0.5em]">Total Investment Summary</p>
+                <p class="text-gray-500 font-bold uppercase mb-12 text-sm" style="letter-spacing: 0.5em;">Total Investment Summary</p>
                 <div class="flex items-center justify-center gap-24">
                     <div class="opacity-30 transform scale-90">
                         <p class="text-2xl text-gray-400 mb-2">القيمة الأساسية</p>
@@ -340,11 +344,11 @@
                     </div>
                     <div class="w-px h-32 bg-gold-500/20 shadow-[0_0_10px_#D4AF37]"></div>
                     <div class="relative group">
-                        <!-- هالة التوهج سيتم إخفاؤها في الـ PDF لتوضيح الخط -->
+                        <!-- هالة التوهج سيتم إخفاؤها في وضع الـ PDF -->
                         <div class="absolute inset-0 bg-gold-500 blur-[60px] opacity-10"></div>
-                        <!-- صندوق الاستثمار الصافي -->
+                        <!-- صندوق الاستثمار الصافي الذي تمت معالجته للصور -->
                         <div class="border-2 border-gold-500/40 px-20 py-12 rounded-[50px] bg-dark-950/50 backdrop-blur-2xl">
-                            <p class="text-gold-500 text-2xl font-bold mb-6 uppercase tracking-widest text-neon">الاستثمار الصافي</p>
+                            <p class="text-gold-500 text-2xl font-bold mb-6 uppercase text-neon">الاستثمار الصافي</p>
                             <div class="text-[10rem] font-black text-white leading-none mb-4 text-neon" id="net-total">3,500</div>
                             <p class="text-2xl text-gray-400 font-light">ريال سعودي / شهرياً</p>
                         </div>
@@ -364,38 +368,38 @@
             <div class="grid grid-cols-2 gap-12 flex-grow">
                 <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent hover:border-gold-500/60 transition-all group" data-aos="flip-right">
                     <div class="flex justify-between items-start mb-12">
-                        <!-- تم استخدام روابط PNG رسمية لضمان عملها في الكانفاس بدون مشاكل SVGs -->
+                        <!-- روابط PNG لشعارات البنوك (آمنة تماماً للـ Canvas) -->
                         <img src="https://logo.clearbit.com/alahli.com" crossorigin="anonymous"
                              alt="SNB Logo" class="bank-logo h-12 rounded">
-                        <span class="text-[10px] font-bold text-gray-600 tracking-widest">SNB BANK</span>
+                        <span class="text-[10px] font-bold text-gray-600" style="letter-spacing: 0.1em;">SNB BANK</span>
                     </div>
                     <div class="space-y-6">
                         <div>
-                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
-                            <p class="text-3xl font-mono text-white tracking-widest" id="bank1-acc">1188 7332 0001 06</p>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase" style="letter-spacing: 0.1em;">Account Number</p>
+                            <p class="text-3xl font-mono text-white" style="letter-spacing: 0.1em;" id="bank1-acc">1188 7332 0001 06</p>
                         </div>
                         <div>
-                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
-                            <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank1-iban">SA14 1000 0011 8873 3200 0106</p>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase" style="letter-spacing: 0.1em;">IBAN Code</p>
+                            <p class="text-xl font-mono text-gold-500" style="letter-spacing: 0.1em;" id="bank1-iban">SA14 1000 0011 8873 3200 0106</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent hover:border-gold-500/60 transition-all group" data-aos="flip-left" data-aos-delay="200">
                     <div class="flex justify-between items-start mb-12">
-                         <!-- تم استخدام روابط PNG رسمية لضمان عملها في الكانفاس بدون مشاكل SVGs -->
+                         <!-- روابط PNG لشعارات البنوك (آمنة تماماً للـ Canvas) -->
                         <img src="https://logo.clearbit.com/alrajhibank.com.sa" crossorigin="anonymous"
                              alt="Al Rajhi Logo" class="bank-logo h-12 rounded">
-                        <span class="text-[10px] font-bold text-gray-600 tracking-widest">RAJHI BANK</span>
+                        <span class="text-[10px] font-bold text-gray-600" style="letter-spacing: 0.1em;">RAJHI BANK</span>
                     </div>
                     <div class="space-y-6">
                         <div>
-                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
-                            <p class="text-3xl font-mono text-white tracking-widest" id="bank2-acc">4456 1234 0000 99</p>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase" style="letter-spacing: 0.1em;">Account Number</p>
+                            <p class="text-3xl font-mono text-white" style="letter-spacing: 0.1em;" id="bank2-acc">4456 1234 0000 99</p>
                         </div>
                         <div>
-                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
-                            <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank2-iban">SA90 8000 0044 5612 3400 0099</p>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase" style="letter-spacing: 0.1em;">IBAN Code</p>
+                            <p class="text-xl font-mono text-gold-500" style="letter-spacing: 0.1em;" id="bank2-iban">SA90 8000 0044 5612 3400 0099</p>
                         </div>
                     </div>
                 </div>
@@ -413,7 +417,7 @@
                 </p>
                 <div class="pt-12 border-t border-gold-500/20 w-full max-w-2xl mx-auto">
                     <p class="text-4xl font-bold text-white mb-3 text-neon" id="contact-phone">0565553390</p>
-                    <p class="text-gold-500 uppercase text-[11px] font-bold tracking-[0.8em]">Official Liaison</p>
+                    <p class="text-gold-500 uppercase text-[11px] font-bold" style="letter-spacing: 0.5em;">Official Liaison</p>
                 </div>
             </div>
         </div>
@@ -477,62 +481,72 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 3. التصدير الصارم للصور ثم PDF
-        async function exportToImagePDF() {
+        // 3. التصدير العملاق (لقطة شاشة واحدة بالطول وحفظها بصفحة PDF واحدة متصلة)
+        async function exportToLongScreenshotPDF() {
             const btn = document.getElementById('pdf-btn');
             const originalContent = btn.innerHTML;
             
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التصدير...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري أخذ اللقطة الطويلة...';
             btn.disabled = true;
 
+            // الصعود لأعلى الشاشة لضمان عدم قص أي جزء من اللقطة
             window.scrollTo(0, 0);
 
-            // تفعيل وضع PDF اللي بيلغي كل الحركات والزجاج المعقد
+            // تفعيل وضع التصوير الخاص (يزيل الفراغات، الحركات، والزجاج المعقد)
             document.body.classList.add('pdf-mode');
             document.getElementById('controls').style.display = 'none';
 
-            // انتظار اكتمال تحميل الخطوط وتطبيق الـ CSS الصارم
+            // انتظار تحميل كامل الخطوط وأخذ مهلة للتأكد من توقف الأنميشن
             await document.fonts.ready;
-            await new Promise(resolve => setTimeout(resolve, 600)); 
+            await new Promise(resolve => setTimeout(resolve, 800)); 
 
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [1280, 720]
-            });
+            const captureArea = document.getElementById('capture-area');
 
-            const slides = document.querySelectorAll('.slide');
-            for (let i = 0; i < slides.length; i++) {
-                const slide = slides[i];
-                
-                const canvas = await html2canvas(slide, {
-                    scale: 2, // دقة ممتازة
-                    useCORS: true, // سماحية جلب شعارات البنوك
+            try {
+                // أخذ لقطة شاشة واحدة للمنطقة بالكامل (الصندوق الذي يحتوي على كل الشرائح)
+                const canvas = await html2canvas(captureArea, {
+                    scale: 2, // دقة عالية جداً
+                    useCORS: true, // ضرورية لتحميل شعارات البنوك
                     allowTaint: true,
                     backgroundColor: '#030303',
                     logging: false,
-                    windowWidth: 1280,
                     onclone: function (clonedDoc) {
-                        // إجبار النسخة المصورة على احترام اتجاه اللغة العربية
                         clonedDoc.body.dir = 'rtl';
                     }
                 });
                 
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
                 
-                if (i > 0) pdf.addPage([1280, 720], 'landscape');
-                pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
+                // حساب أبعاد اللقطة الطويلة جداً
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+
+                // إنشاء PDF بمقاس مخصص (طوله وعرضه نفس طول وعرض السكرين شوت بالظبط)
+                // ده هيخلي الـ PDF صفحة واحدة طويلة ومستمرة!
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [imgWidth, imgHeight]
+                });
+
+                // لصق الصورة الطويلة بحجم الصفحة بالكامل
+                pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+
+                // حفظ الملف
+                const clientName = document.getElementById('client-name').innerText;
+                pdf.save(`AlMona_Proposal_${clientName}_Full.pdf`);
+
+            } catch (error) {
+                console.error("خطأ أثناء التصدير:", error);
+                alert("حدث خطأ ما أثناء حفظ اللقطة.");
+            } finally {
+                // العودة للوضع الطبيعي للصفحة وإظهار الأزرار
+                document.body.classList.remove('pdf-mode');
+                document.getElementById('controls').style.display = 'flex';
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
             }
-
-            const clientName = document.getElementById('client-name').innerText;
-            pdf.save(`AlMona_Proposal_${clientName}.pdf`);
-
-            // استعادة الجماليات الأصلية للصفحة
-            document.body.classList.remove('pdf-mode');
-            document.getElementById('controls').style.display = 'flex';
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
         }
     </script>
 
