@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض سعر مؤسسة المنى | الهوية الرقمية المتطورة</title>
+    
+    <!-- الخطوط -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- الأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- مكتبة الحركات (AOS) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- المكتبات الخارجية للمعالجة (Excel & PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: { 400: '#f6d365', 500: '#D4AF37', 600: '#b8860b' },
+                        dark: { 950: '#030303', 900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a' }
+                    },
+                    fontFamily: { sans: ['Cairo', 'sans-serif'], heading: ['Tajawal', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --neon-gold: rgba(212, 175, 55, 0.6);
+            --neon-glow-text: 0 0 10px rgba(212, 175, 55, 0.8), 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        body {
+            background-color: #030303;
+            color: #ffffff;
+            font-family: 'Cairo', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* حاوية الشريحة - قياس 16:9 */
+        .slide {
+            width: 1280px;
+            height: 720px;
+            background: radial-gradient(circle at 50% 50%, #0a0a0a 0%, #030303 100%);
+            position: relative;
+            margin: 40px auto;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            flex-direction: column;
+            padding: 60px 100px;
+            page-break-after: always;
+            box-shadow: 0 0 80px rgba(0,0,0,1);
+        }
+
+        /* توهج النيون */
+        .neon-glow-bg {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--neon-gold) 0%, transparent 70%);
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.25;
+        }
+
+        .text-neon {
+            text-shadow: var(--neon-glow-text);
+        }
+
+        /* تحسين مظهر الجداول */
+        .glass-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 15px;
+        }
+        .glass-table thead th {
+            color: #D4AF37;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            padding: 15px 30px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+            font-size: 15px;
+            text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+        }
+        .glass-table tbody tr {
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.4s ease;
+        }
+        .glass-table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: scale(1.01);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+        }
+        .glass-table td {
+            padding: 22px 30px;
+        }
+        .glass-table td:first-child { border-radius: 0 15px 15px 0; border-right: 3px solid #D4AF37; }
+        .glass-table td:last-child { border-radius: 15px 0 0 15px; }
+
+        /* التحكم العائم */
+        #controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.9);
+        }
+
+        .btn-control {
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 13px;
+        }
+        .btn-pdf { background: #D4AF37; color: #000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        .btn-excel { border: 1px solid #217346; color: #217346; background: rgba(33, 115, 70, 0.05); }
+        .btn-upload { border: 1px solid #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+
+        .btn-control:hover { transform: translateY(-5px); filter: brightness(1.2); }
+
+        /* شعارات البنوك المخصصة باللون الأبيض */
+        .bank-logo {
+            filter: brightness(0) invert(1);
+            max-height: 45px;
+            object-contain: contain;
+        }
+
+        @media print {
+            #controls { display: none !important; }
+            .slide { margin: 0; border: none; box-shadow: none; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="controls" class="no-print">
+        <button onclick="downloadExcelTemplate()" class="btn-control btn-excel">
+            <i class="fa-solid fa-file-excel"></i> تحميل القالب
+        </button>
+        <button onclick="document.getElementById('fileInput').click()" class="btn-control btn-upload">
+            <i class="fa-solid fa-upload"></i> تحديث البيانات
+        </button>
+        <button onclick="exportToPDF()" class="btn-control btn-pdf">
+            <i class="fa-solid fa-file-pdf"></i> تصدير PDF
+        </button>
+        <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
+    </div>
+
+    <div id="capture-area">
+
+        <!-- الشريحة 1: الغلاف -->
+        <div class="slide flex flex-col justify-center items-center text-center">
+            <div class="neon-glow-bg top-0 left-0"></div>
+            <div class="neon-glow-bg bottom-0 right-0" style="opacity: 0.15;"></div>
+            
+            <div data-aos="zoom-out" data-aos-duration="1500" class="relative z-10">
+                <div class="mb-14">
+                    <!-- تكبير الشعار -->
+                    <img id="main-logo" src="https://cdn.prod.website-files.com/60635261197822875f187b0b/6101599912ddba5003383e9c_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D9%86%D9%89-19-p-500.png" 
+                         alt="شعار مؤسسة المنى" class="w-96 mx-auto drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]">
+                </div>
+                
+                <p class="text-gold-500 tracking-[0.9em] text-sm font-bold mb-8 uppercase text-neon" id="sub-title">Excellence In Digital Marketing</p>
+                <h1 class="text-7xl font-black font-heading mb-16 text-neon tracking-tight" id="main-title">عرض سعر استراتيجي</h1>
+                
+                <div class="flex justify-center items-center gap-20 border-t border-gold-500/10 pt-12">
+                    <div class="text-right">
+                        <p class="text-gray-600 text-[11px] uppercase font-bold tracking-[0.3em] mb-2">Client Name</p>
+                        <p class="text-3xl font-bold text-white font-heading text-neon" id="client-name">المحامي بكر صبحي</p>
+                    </div>
+                    <div class="w-px h-16 bg-gold-500/30"></div>
+                    <div class="text-right">
+                        <p class="text-gray-600 text-[11px] uppercase font-bold tracking-[0.3em] mb-2">Proposal Date</p>
+                        <p class="text-3xl font-bold text-white font-heading text-neon" id="proposal-date">أبريل 2026</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريحة 2: الرؤية الرقمية (تم استعادتها وتطويرها) -->
+        <div class="slide">
+            <div class="neon-glow-bg top-1/2 left-0 -translate-y-1/2 opacity-20"></div>
+            <div class="grid grid-cols-2 gap-16 items-center h-full relative z-10">
+                <div data-aos="fade-left">
+                    <div class="mb-10">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-16 h-[2px] bg-gold-500 shadow-[0_0_10px_#D4AF37]"></div>
+                            <span class="text-gold-500 font-bold tracking-[0.4em] text-sm uppercase text-neon">Strategic Vision</span>
+                        </div>
+                        <h2 class="text-6xl font-heading font-black text-white leading-tight">رؤيتنا <br><span class="text-gold-500 text-neon">الرقمية</span></h2>
+                    </div>
+                    <p class="text-2xl text-gray-400 leading-relaxed font-light mb-12" id="vision-text">
+                        نحن لا نكتفي بتقديم الخدمات، بل نصمم أنظمة نمو متكاملة. في مؤسسة المنى، نعتمد على التحليل المعياري والتنفيذ الإبداعي لخلق بصمة رقمية تليق بهيبة مكاتبكم.
+                    </p>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px] hover:border-gold-500/60 transition-all group">
+                            <i class="fa-solid fa-microchip text-gold-500 text-4xl mb-6 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="font-bold text-white text-2xl mb-2">تحليل ذكي</h4>
+                            <p class="text-gray-500 text-sm">قياس دقيق لكل خطوة تسويقية.</p>
+                        </div>
+                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px] hover:border-gold-500/60 transition-all group">
+                            <i class="fa-solid fa-wand-magic-sparkles text-gold-500 text-4xl mb-6 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="font-bold text-white text-2xl mb-2">إبداع تجريدي</h4>
+                            <p class="text-gray-500 text-sm">تصاميم بصرية بمعايير عالمية.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-center items-center" data-aos="zoom-in">
+                    <div class="relative w-[450px] h-[450px]">
+                        <div class="absolute inset-0 border-2 border-gold-500/10 rounded-full animate-[ping_10s_infinite]"></div>
+                        <div class="absolute inset-10 border border-gold-500/30 rounded-full animate-[pulse_5s_infinite]"></div>
+                        <div class="absolute inset-20 bg-gradient-to-tr from-gold-600/20 via-transparent to-transparent rounded-full flex items-center justify-center backdrop-blur-xl border border-gold-500/50 shadow-[0_0_100px_rgba(212,175,55,0.2)]">
+                            <i class="fa-solid fa-atom text-7xl text-gold-500 animate-spin-slow"></i>
+                        </div>
+                        <!-- خطوط نيون عائمة -->
+                        <div class="absolute top-0 right-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] rotate-45"></div>
+                        <div class="absolute bottom-0 left-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] -rotate-45"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريحة 3: الخدمات (جدول نيون فاخر) -->
+        <div class="slide">
+            <div class="mb-12" data-aos="fade-down">
+                <h2 class="text-5xl font-heading font-black text-white">تفاصيل <span class="text-gold-500 text-neon">الاستثمار</span></h2>
+            </div>
+            <div class="flex-grow overflow-hidden" data-aos="fade-up">
+                <table class="glass-table">
+                    <thead>
+                        <tr>
+                            <th class="text-right uppercase">البند التسويقي</th>
+                            <th class="text-right uppercase">تفاصيل النطاق والحلول التقنية</th>
+                            <th class="text-left uppercase">القيمة (ر.س)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr>
+                            <td class="font-bold text-white text-xl">الهوية البصرية</td>
+                            <td class="text-gray-400">تصميم شعار احترافي + كتيب الهوية الرسمية المتكامل (Brand Guidelines)</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">500</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-white text-xl">إدارة الموقع</td>
+                            <td class="text-gray-400">الإشراف الفني، التحديثات الدورية، وحماية الخوادم والبيانات</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">700</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-white text-xl">SEO & الحملات</td>
+                            <td class="text-gray-400">تصدر محركات البحث وإدارة حملات Google Ads الاستباقية</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">1000</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-white text-xl">المحتوى المرئي</td>
+                            <td class="text-gray-400">إنتاج 10 فيديوهات Reels + إدارة تفاعلية متكاملة للمنصات</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">1800</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- الشريحة 4: الاستثمار النهائي -->
+        <div class="slide justify-center items-center text-center">
+            <div class="neon-glow-bg w-[700px] h-[700px] opacity-10"></div>
+            <div class="relative z-10" data-aos="zoom-in">
+                <p class="text-gray-500 tracking-[0.5em] font-bold uppercase mb-12 text-sm">Total Investment Summary</p>
+                <div class="flex items-center justify-center gap-24">
+                    <div class="opacity-30 transform scale-90">
+                        <p class="text-2xl text-gray-400 mb-2">القيمة الأساسية</p>
+                        <p class="text-6xl font-bold line-through" id="original-total">4,000</p>
+                    </div>
+                    <div class="w-px h-32 bg-gold-500/20 shadow-[0_0_10px_#D4AF37]"></div>
+                    <div class="relative group">
+                        <div class="absolute inset-0 bg-gold-500 blur-[60px] opacity-10"></div>
+                        <div class="border-2 border-gold-500/40 px-20 py-12 rounded-[50px] bg-dark-950/50 backdrop-blur-2xl">
+                            <p class="text-gold-500 text-2xl font-bold mb-6 tracking-widest uppercase text-neon">الاستثمار الصافي</p>
+                            <div class="text-[10rem] font-black text-white leading-none mb-4 tracking-tighter text-neon" id="net-total">3,500</div>
+                            <p class="text-2xl text-gray-400 font-light">ريال سعودي / شهرياً</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-20 inline-flex items-center gap-6 px-12 py-5 bg-gold-500 text-dark-950 font-black rounded-full shadow-[0_0_50px_rgba(212,175,55,0.5)] transform hover:scale-105 transition-transform" id="savings-box">
+                    <i class="fa-solid fa-crown text-2xl"></i>
+                    <span>قيمة التوفير الممنوحة: 500 ريال</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريحة 5: البيانات البنكية (بالشعارات المحدثة) -->
+        <div class="slide">
+            <h2 class="text-5xl font-heading font-black mb-16 text-center text-neon" data-aos="fade-down">قنوات <span class="text-gold-500">التحويل المالي</span></h2>
+            
+            <div class="grid grid-cols-2 gap-12 flex-grow">
+                <!-- البنك الأهلي -->
+                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent hover:border-gold-500/60 transition-all group" data-aos="flip-right">
+                    <div class="flex justify-between items-start mb-12">
+                        <!-- شعار البنك الأهلي باللون الأبيض -->
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg" 
+                             alt="SNB Logo" class="bank-logo h-12">
+                        <span class="text-[10px] font-bold text-gray-600 tracking-widest">SNB BANK</span>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
+                            <p class="text-3xl font-mono text-white tracking-widest" id="bank1-acc">1188 7332 0001 06</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
+                            <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank1-iban">SA14 1000 0011 8873 3200 0106</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مصرف الراجحي -->
+                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent hover:border-gold-500/60 transition-all group" data-aos="flip-left" data-aos-delay="200">
+                    <div class="flex justify-between items-start mb-12">
+                        <!-- شعار مصرف الراجحي باللون الأبيض -->
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg" 
+                             alt="Al Rajhi Logo" class="bank-logo h-12">
+                        <span class="text-[10px] font-bold text-gray-600 tracking-widest">RAJHI BANK</span>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
+                            <p class="text-3xl font-mono text-white tracking-widest" id="bank2-acc">4456 1234 0000 99</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
+                            <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank2-iban">SA90 8000 0044 5612 3400 0099</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريحة الأخيرة -->
+        <div class="slide flex flex-col justify-center items-center text-center">
+            <div class="neon-glow-bg w-[800px] h-[800px] opacity-15"></div>
+            <div class="relative z-10" data-aos="zoom-out">
+                <i class="fa-solid fa-gem text-9xl text-gold-500/40 mb-12 animate-pulse shadow-neon"></i>
+                <h2 class="text-7xl font-heading font-black mb-10 text-neon leading-tight">شراكة تصنع <br><span class="text-gold-500">الفارق</span></h2>
+                <p class="text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-16 font-light italic">
+                    "التزامنا هو تقديم جودة استثنائية تعكس مكانة مكتبكم الموقر."
+                </p>
+                <div class="pt-12 border-t border-gold-500/20 w-full max-w-2xl mx-auto">
+                    <p class="text-4xl font-bold text-white mb-3 text-neon" id="contact-phone">0565553390</p>
+                    <p class="text-gold-500 tracking-[0.8em] uppercase text-[11px] font-bold">Official Liaison</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // تهيئة الحركات
+        window.addEventListener('load', function() {
+            if (typeof AOS !== 'undefined') {
+                AOS.init({ duration: 1200, once: false, mirror: true, offset: 50 });
+            }
+        });
+
+        // 1. تحميل قالب Excel
+        function downloadExcelTemplate() {
+            const data = [
+                ["معرّف الحقل", "القيمة", "الوصف"],
+                ["main-title", "عرض سعر استراتيجي", "عنوان الغلاف"],
+                ["client-name", "المحامي بكر صبحي", "اسم العميل"],
+                ["proposal-date", "أبريل 2026", "تاريخ العرض"],
+                ["vision-text", "نحن لا نكتفي بتقديم الخدمات، بل نصمم أنظمة نمو متكاملة تعتمد على التحليل المعياري.", "نص الرؤية"],
+                ["original-total", "4,000", "السعر قبل الخصم"],
+                ["net-total", "3,500", "السعر النهائي"],
+                ["savings-val", "500", "مبلغ التوفير"],
+                ["bank1-acc", "1188 7332 0001 06", "الأهلي"],
+                ["bank1-iban", "SA14 1000 0011 8873 3200 0106", ""],
+                ["bank2-acc", "4456 1234 0000 99", "الراجحي"],
+                ["bank2-iban", "SA90 8000 0044 5612 3400 0099", ""],
+                ["contact-phone", "0565553390", "التواصل"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "بيانات العرض");
+            XLSX.writeFile(wb, "Template_AlMona_Advanced.xlsx");
+        }
+
+        // 2. تحديث البيانات برفع الملف
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                jsonData.forEach(row => {
+                    const id = row["معرّف الحقل"];
+                    const val = row["القيمة"];
+                    if (id && val) {
+                        const el = document.getElementById(id);
+                        if (el) el.innerText = val;
+                        if (id === "savings-val") {
+                            document.getElementById('savings-box').innerHTML = `<i class="fa-solid fa-crown text-2xl"></i><span>قيمة التوفير الممنوحة: ${val} ريال</span>`;
+                        }
+                    }
+                });
+                alert("تم تحديث كافة بيانات العرض بنجاح!");
+                if (typeof AOS !== 'undefined') AOS.refresh();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 3. تصدير PDF
+        function exportToPDF() {
+            const element = document.getElementById('capture-area');
+            const client = document.getElementById('client-name').innerText;
+            const opt = {
+                margin: 0,
+                filename: `AlMona_Proposal_${client}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#030303' },
+                jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' }
+            };
+            
+            // إخفاء الأزرار قبل التصوير
+            document.getElementById('controls').style.display = 'none';
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                document.getElementById('controls').style.display = 'flex';
+            });
+        }
+    </script>
+
+</body>
+</html>
