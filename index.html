@@ -13,14 +13,8 @@
     <!-- الأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- مكتبة الحركات (AOS) -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    
-    <!-- المكتبات الخارجية للمعالجة (Excel, html2canvas, jsPDF) -->
+    <!-- مكتبة معالجة البيانات (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -66,7 +60,7 @@
             box-shadow: 0 0 80px rgba(0,0,0,1);
         }
 
-        /* توهج النيون */
+        /* توهج النيون الثابت */
         .neon-glow-bg {
             position: absolute;
             width: 600px;
@@ -99,12 +93,6 @@
         }
         .glass-table tbody tr {
             background: rgba(255, 255, 255, 0.03);
-            transition: all 0.4s ease;
-        }
-        .glass-table tbody tr:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: scale(1.01);
-            box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
         }
         .glass-table td {
             padding: 22px 30px;
@@ -112,10 +100,20 @@
         .glass-table td:first-child { border-radius: 0 15px 15px 0; border-right: 3px solid #D4AF37; }
         .glass-table td:last-child { border-radius: 15px 0 0 15px; }
 
-        /* التحكم العائم */
+        /* منطقة التحفيز السفلية لإظهار الأزرار */
+        .bottom-trigger-zone {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            z-index: 9998;
+        }
+
+        /* التحكم العائم (مخفي افتراضياً) */
         #controls {
             position: fixed;
-            bottom: 30px;
+            bottom: -80px; /* مخفي أسفل الشاشة */
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
@@ -127,77 +125,60 @@
             display: flex;
             gap: 20px;
             box-shadow: 0 15px 50px rgba(0,0,0,0.9);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* إظهار الأزرار عند المرور بالماوس على أسفل الشاشة أو على الأزرار نفسها */
+        .bottom-trigger-zone:hover + #controls,
+        #controls:hover {
+            bottom: 30px;
+            opacity: 1;
+            visibility: visible;
         }
 
         .btn-control {
             padding: 10px 24px;
             border-radius: 25px;
             font-weight: 700;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             gap: 10px;
             color: white;
             font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .btn-pdf { background: #D4AF37; color: #000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
         .btn-excel { border: 1px solid #217346; color: #217346; background: rgba(33, 115, 70, 0.05); }
         .btn-upload { border: 1px solid #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
 
-        .btn-control:hover { transform: translateY(-5px); filter: brightness(1.2); }
-        
-        .btn-control:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-control:hover { filter: brightness(1.2); }
 
         /* شعارات البنوك */
         .bank-logo {
             max-height: 45px;
             object-fit: contain;
-            /* فلتر لتحويل الشعار للون الأبيض */
             filter: brightness(0) invert(1) !important; 
         }
 
-        /* ----------------------------------------------------------- */
-        /* وضع "تصوير الشاشة" (بدون تغيير في التصميم، فقط تجميد الحركات) */
-        /* ----------------------------------------------------------- */
-        .capture-mode {
-            background-color: #030303 !important;
-        }
-        
-        /* إظهار كل العناصر بشكل كامل وعدم إخفائها بسبب تأثيرات الدخول AOS */
-        .capture-mode [data-aos], .capture-mode .aos-init {
-            opacity: 1 !important;
-            transform: none !important;
-            transition: none !important;
-            visibility: visible !important;
-        }
-
-        /* تجميد أي أنيميشن بيلف أو بينبض عشان الصورة متطلعش مزغللة */
-        .capture-mode * {
-            animation: none !important;
-        }
-        
-        /* إخفاء شريط التمرير أثناء التصوير لتجنب ترحيل الأبعاد */
-        .capture-mode::-webkit-scrollbar {
-            display: none;
+        @media print {
+            .no-print, .bottom-trigger-zone { display: none !important; }
         }
     </style>
 </head>
 <body class="antialiased">
 
+    <!-- منطقة غير مرئية أسفل الشاشة لاكتشاف الماوس -->
+    <div class="bottom-trigger-zone"></div>
+    
+    <!-- الأزرار -->
     <div id="controls" class="no-print">
         <button onclick="downloadExcelTemplate()" class="btn-control btn-excel">
             <i class="fa-solid fa-file-excel"></i> تحميل القالب
         </button>
         <button onclick="document.getElementById('fileInput').click()" class="btn-control btn-upload">
             <i class="fa-solid fa-upload"></i> تحديث البيانات
-        </button>
-        <!-- الزر المحدث لأخذ سكرين شوت لكل شريحة وتجميعها بـ PDF -->
-        <button onclick="exportScreenshotsToPDF()" class="btn-control btn-pdf" id="pdf-btn">
-            <i class="fa-solid fa-camera"></i> حفظ سكرين شوت (PDF)
         </button>
         <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
     </div>
@@ -209,7 +190,7 @@
             <div class="neon-glow-bg top-0 left-0"></div>
             <div class="neon-glow-bg bottom-0 right-0" style="opacity: 0.15;"></div>
             
-            <div data-aos="zoom-out" data-aos-duration="1500" class="relative z-10">
+            <div class="relative z-10">
                 <div class="mb-14">
                     <img id="main-logo" src="https://cdn.prod.website-files.com/60635261197822875f187b0b/6101599912ddba5003383e9c_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D9%86%D9%89-19-p-500.png" 
                          alt="شعار مؤسسة المنى" crossorigin="anonymous" class="w-96 mx-auto drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]">
@@ -236,7 +217,7 @@
         <div class="slide">
             <div class="neon-glow-bg top-1/2 left-0 -translate-y-1/2 opacity-20"></div>
             <div class="grid grid-cols-2 gap-16 items-center h-full relative z-10">
-                <div data-aos="fade-left">
+                <div>
                     <div class="mb-10">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-16 h-[2px] bg-gold-500 shadow-[0_0_10px_#D4AF37]"></div>
@@ -248,24 +229,24 @@
                         نحن لا نكتفي بتقديم الخدمات، بل نصمم أنظمة نمو متكاملة. في مؤسسة المنى، نعتمد على التحليل المعياري والتنفيذ الإبداعي لخلق بصمة رقمية تليق بهيبة مكاتبكم.
                     </p>
                     <div class="grid grid-cols-2 gap-8">
-                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px] hover:border-gold-500/60 transition-all group">
-                            <i class="fa-solid fa-microchip text-gold-500 text-4xl mb-6 group-hover:scale-110 transition-transform"></i>
+                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px]">
+                            <i class="fa-solid fa-microchip text-gold-500 text-4xl mb-6"></i>
                             <h4 class="font-bold text-white text-2xl mb-2">تحليل ذكي</h4>
                             <p class="text-gray-500 text-sm">قياس دقيق لكل خطوة تسويقية.</p>
                         </div>
-                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px] hover:border-gold-500/60 transition-all group">
-                            <i class="fa-solid fa-wand-magic-sparkles text-gold-500 text-4xl mb-6 group-hover:scale-110 transition-transform"></i>
+                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px]">
+                            <i class="fa-solid fa-wand-magic-sparkles text-gold-500 text-4xl mb-6"></i>
                             <h4 class="font-bold text-white text-2xl mb-2">إبداع تجريدي</h4>
                             <p class="text-gray-500 text-sm">تصاميم بصرية بمعايير عالمية.</p>
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-center items-center" data-aos="zoom-in">
+                <div class="flex justify-center items-center">
                     <div class="relative w-[450px] h-[450px]">
-                        <div class="absolute inset-0 border-2 border-gold-500/10 rounded-full animate-[ping_10s_infinite]"></div>
-                        <div class="absolute inset-10 border border-gold-500/30 rounded-full animate-[pulse_5s_infinite]"></div>
+                        <div class="absolute inset-0 border-2 border-gold-500/10 rounded-full"></div>
+                        <div class="absolute inset-10 border border-gold-500/30 rounded-full"></div>
                         <div class="absolute inset-20 bg-gradient-to-tr from-gold-600/20 via-transparent to-transparent rounded-full flex items-center justify-center backdrop-blur-xl border border-gold-500/50 shadow-[0_0_100px_rgba(212,175,55,0.2)]">
-                            <i class="fa-solid fa-atom text-7xl text-gold-500 animate-spin-slow"></i>
+                            <i class="fa-solid fa-atom text-7xl text-gold-500"></i>
                         </div>
                         <div class="absolute top-0 right-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] rotate-45"></div>
                         <div class="absolute bottom-0 left-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] -rotate-45"></div>
@@ -276,10 +257,10 @@
 
         <!-- الشريحة 3: الخدمات -->
         <div class="slide">
-            <div class="mb-12" data-aos="fade-down">
+            <div class="mb-12">
                 <h2 class="text-5xl font-heading font-black text-white">تفاصيل <span class="text-gold-500 text-neon">الاستثمار</span></h2>
             </div>
-            <div class="flex-grow overflow-hidden" data-aos="fade-up">
+            <div class="flex-grow overflow-hidden">
                 <table class="glass-table">
                     <thead>
                         <tr>
@@ -317,7 +298,7 @@
         <!-- الشريحة 4: الاستثمار النهائي -->
         <div class="slide justify-center items-center text-center">
             <div class="neon-glow-bg w-[700px] h-[700px] opacity-10"></div>
-            <div class="relative z-10" data-aos="zoom-in">
+            <div class="relative z-10">
                 <p class="text-gray-500 font-bold uppercase mb-12 text-sm tracking-[0.5em]">Total Investment Summary</p>
                 <div class="flex items-center justify-center gap-24">
                     <div class="opacity-30 transform scale-90">
@@ -325,7 +306,7 @@
                         <p class="text-6xl font-bold line-through" id="original-total">4,000</p>
                     </div>
                     <div class="w-px h-32 bg-gold-500/20 shadow-[0_0_10px_#D4AF37]"></div>
-                    <div class="relative group">
+                    <div class="relative">
                         <div class="absolute inset-0 bg-gold-500 blur-[60px] opacity-10"></div>
                         <div class="border-2 border-gold-500/40 px-20 py-12 rounded-[50px] bg-dark-950/50 backdrop-blur-2xl">
                             <p class="text-gold-500 text-2xl font-bold mb-6 uppercase text-neon tracking-widest">الاستثمار الصافي</p>
@@ -334,7 +315,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-20 inline-flex items-center gap-6 px-12 py-5 bg-gold-500 text-dark-950 font-black rounded-full shadow-[0_0_50px_rgba(212,175,55,0.5)] transform hover:scale-105 transition-transform" id="savings-box">
+                <div class="mt-20 inline-flex items-center gap-6 px-12 py-5 bg-gold-500 text-dark-950 font-black rounded-full shadow-[0_0_50px_rgba(212,175,55,0.5)]" id="savings-box">
                     <i class="fa-solid fa-crown text-2xl"></i>
                     <span>قيمة التوفير الممنوحة: 500 ريال</span>
                 </div>
@@ -343,10 +324,10 @@
 
         <!-- الشريحة 5: البيانات البنكية -->
         <div class="slide">
-            <h2 class="text-5xl font-heading font-black mb-16 text-center text-neon" data-aos="fade-down">قنوات <span class="text-gold-500">التحويل المالي</span></h2>
+            <h2 class="text-5xl font-heading font-black mb-16 text-center text-neon">قنوات <span class="text-gold-500">التحويل المالي</span></h2>
             
             <div class="grid grid-cols-2 gap-12 flex-grow">
-                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent hover:border-gold-500/60 transition-all group" data-aos="flip-right">
+                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
                     <div class="flex justify-between items-start mb-12">
                         <!-- تم إعطاء ID للشعار عشان نحوله لـ Base64 -->
                         <img id="snb-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg" 
@@ -365,7 +346,7 @@
                     </div>
                 </div>
 
-                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent hover:border-gold-500/60 transition-all group" data-aos="flip-left" data-aos-delay="200">
+                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
                     <div class="flex justify-between items-start mb-12">
                         <!-- تم إعطاء ID للشعار عشان نحوله لـ Base64 -->
                         <img id="rajhi-logo" src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg" 
@@ -389,7 +370,7 @@
         <!-- الشريحة الأخيرة -->
         <div class="slide flex flex-col justify-center items-center text-center">
             <div class="neon-glow-bg w-[800px] h-[800px] opacity-15"></div>
-            <div class="relative z-10" data-aos="zoom-out">
+            <div class="relative z-10">
                 <i class="fa-solid fa-gem text-9xl text-gold-500/40 mb-12 shadow-neon"></i>
                 <h2 class="text-7xl font-heading font-black mb-10 text-neon leading-tight">شراكة تصنع <br><span class="text-gold-500">الفارق</span></h2>
                 <p class="text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-16 font-light italic">
@@ -406,8 +387,7 @@
 
     <script>
         // ------------------------------------------------------------------------
-        // حل جذري لمشكلة اختفاء شعارات البنوك من ويكيبيديا أثناء التصوير (CORS Issue)
-        // نقوم بتحميل الـ SVG برمجياً وتحويله لنص Base64 لكي يظهر غصباً عن الكانفاس
+        // تحميل الـ SVG برمجياً وتحويله لنص Base64 لكي يظهر غصباً عن الكانفاس
         // ------------------------------------------------------------------------
         async function fetchImageAsBase64(url, imgElementId) {
             try {
@@ -424,11 +404,6 @@
         }
 
         window.addEventListener('load', function() {
-            // تهيئة الحركات
-            if (typeof AOS !== 'undefined') {
-                AOS.init({ duration: 1200, once: false, mirror: true, offset: 50 });
-            }
-
             // تحويل الشعارات لـ Base64 فور تحميل الصفحة
             fetchImageAsBase64('https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg', 'snb-logo');
             fetchImageAsBase64('https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg', 'rajhi-logo');
@@ -478,71 +453,8 @@
                     }
                 });
                 alert("تم تحديث كافة بيانات العرض بنجاح!");
-                if (typeof AOS !== 'undefined') AOS.refresh();
             };
             reader.readAsArrayBuffer(file);
-        }
-
-        // 3. التصوير الدقيق (أخذ سكرين شوت لكل شريحة وتجميعها في PDF)
-        async function exportScreenshotsToPDF() {
-            const btn = document.getElementById('pdf-btn');
-            const originalContent = btn.innerHTML;
-            
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التقاط الصور...';
-            btn.disabled = true;
-
-            // 1. الدخول في وضع التصوير (تجميد الأنميشن وإظهار كل العناصر المخفية)
-            document.body.classList.add('capture-mode');
-            document.getElementById('controls').style.display = 'none';
-
-            // نعطي المتصفح ثانية واحدة عشان يطبق إظهار العناصر المتأخرة
-            await new Promise(resolve => setTimeout(resolve, 1000)); 
-
-            // 2. تهيئة ملف الـ PDF بمقاس الشاشة
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [1280, 720]
-            });
-
-            // 3. المرور على شريحة شريحة وتصويرها
-            const slides = document.querySelectorAll('.slide');
-            for (let i = 0; i < slides.length; i++) {
-                const slide = slides[i];
-                
-                // النزول للشريحة عشان الكانفاس يقرأها صح
-                slide.scrollIntoView({ behavior: 'instant', block: 'start' });
-                await new Promise(resolve => setTimeout(resolve, 200)); // مهلة بسيطة بعد السكرول
-                
-                // تصوير الشريحة (Screenshot)
-                const canvas = await html2canvas(slide, {
-                    scale: 2, // دقة مضاعفة
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#030303',
-                    logging: false,
-                    width: 1280,
-                    height: 720
-                });
-                
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                
-                // إضافة الصورة لصفحة الـ PDF
-                if (i > 0) pdf.addPage([1280, 720], 'landscape');
-                pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
-            }
-
-            // 4. حفظ الـ PDF
-            const clientName = document.getElementById('client-name').innerText;
-            pdf.save(`AlMona_Proposal_${clientName}_Screenshots.pdf`);
-
-            // 5. الرجوع للوضع الطبيعي وتفعيل الزر
-            document.body.classList.remove('capture-mode');
-            document.getElementById('controls').style.display = 'flex';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
         }
     </script>
 
