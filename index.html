@@ -452,7 +452,7 @@
         });
 
         // ------------------------------------------------------------------------
-        // 1. تحميل قالب Excel (تم التحديث ليصبح بـ 2 Sheets)
+        // 1. تحميل قالب Excel (بـ 2 Sheets)
         // ------------------------------------------------------------------------
         function downloadExcelTemplate() {
             const wb = XLSX.utils.book_new();
@@ -495,64 +495,85 @@
         }
 
         // ------------------------------------------------------------------------
-        // 2. تحديث البيانات برفع الملف (يقرأ الصفحتين ويبني الجدول برمجياً)
+        // 2. تحديث البيانات برفع الملف (يقرأ الشيت الأول للبيانات، والشيت الثاني للجدول)
         // ------------------------------------------------------------------------
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                
-                // --------- الجزء الأول: البيانات الأساسية ---------
-                const generalSheetName = workbook.SheetNames.find(name => name.includes("البيانات الأساسية")) || workbook.SheetNames[0];
-                const generalJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[generalSheetName]);
-                
-                generalJsonData.forEach(row => {
-                    const id = row["معرّف الحقل"];
-                    const val = row["القيمة"];
-                    if (id && val !== undefined) {
-                        const el = document.getElementById(id);
-                        if (el) el.innerText = val;
-                        if (id === "savings-val") {
-                            document.getElementById('savings-box').innerHTML = `<i class="fa-solid fa-crown text-2xl"></i><span>قيمة التوفير الممنوحة: ${val} ريال</span>`;
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // --- قراءة الشيت الأول (البيانات الأساسية) ---
+                    if (workbook.SheetNames.length > 0) {
+                        const sheet1Name = workbook.SheetNames[0];
+                        // قراءة البيانات كمصفوفة من المصفوفات لتجنب مشاكل مسافات أسماء الأعمدة في الإكسيل
+                        const sheet1Data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet1Name], {header: 1});
+                        
+                        // نتخطى الصف الأول (العناوين) ونقرأ الباقي
+                        for (let i = 1; i < sheet1Data.length; i++) {
+                            const row = sheet1Data[i];
+                            if (row && row.length >= 2) {
+                                const id = row[0]; // العمود الأول: معرّف الحقل
+                                const val = row[1]; // العمود الثاني: القيمة
+                                
+                                if (id && val !== undefined) {
+                                    const el = document.getElementById(id);
+                                    if (el) {
+                                        el.innerText = val;
+                                    }
+                                    if (id === "savings-val") {
+                                        const savingsBox = document.getElementById('savings-box');
+                                        if (savingsBox) {
+                                            savingsBox.innerHTML = `<i class="fa-solid fa-crown text-2xl"></i><span>قيمة التوفير الممنوحة: ${val} ريال</span>`;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                });
 
-                // --------- الجزء الثاني: تحديث جدول تفاصيل الاستثمار ---------
-                const tableSheetName = workbook.SheetNames.find(name => name.includes("تفاصيل الاستثمار")) || workbook.SheetNames[1];
-                if (tableSheetName && workbook.Sheets[tableSheetName]) {
-                    const tableJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[tableSheetName]);
-                    const tbody = document.getElementById('table-body');
-                    
-                    if (tableJsonData.length > 0) {
-                        tbody.innerHTML = ''; // مسح محتوى الجدول القديم
+                    // --- قراءة الشيت الثاني (جدول تفاصيل الاستثمار) ---
+                    if (workbook.SheetNames.length > 1) {
+                        const sheet2Name = workbook.SheetNames[1];
+                        const sheet2Data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet2Name], { header: 1 });
                         
-                        tableJsonData.forEach(row => {
-                            // التوافق مع أسماء الأعمدة في الإكسيل
-                            const title = row["البند التسويقي"] || row["البند"] || "";
-                            const details = row["تفاصيل النطاق والحلول التقنية"] || row["التفاصيل"] || "";
-                            const price = row["القيمة (ر.س)"] || row["القيمة"] || row["السعر"] || "";
+                        if (sheet2Data.length > 1) { 
+                            const tbody = document.getElementById('table-body');
+                            tbody.innerHTML = ''; // مسح محتوى الجدول القديم بالكامل
                             
-                            // إضافة صف جديد فقط في حال وجود بيانات
-                            if(title || details || price) {
-                                const tr = document.createElement('tr');
-                                tr.innerHTML = `
-                                    <td class="font-bold text-white text-xl">${title}</td>
-                                    <td class="text-gray-400">${details}</td>
-                                    <td class="text-left font-bold text-gold-500 text-2xl text-neon">${price}</td>
-                                `;
-                                tbody.appendChild(tr);
+                            // اللوب يبدأ من 1 لتخطي صف عناوين الجدول
+                            for (let i = 1; i < sheet2Data.length; i++) {
+                                const row = sheet2Data[i];
+                                if (row && row.length > 0) {
+                                    const title = row[0] || "";     // العمود الأول
+                                    const details = row[1] || "";   // العمود الثاني
+                                    const price = row[2] || "";     // العمود الثالث
+                                    
+                                    // التأكد من وجود أي بيانات قبل إضافة الصف
+                                    if(title || details || price) {
+                                        const tr = document.createElement('tr');
+                                        tr.innerHTML = `
+                                            <td class="font-bold text-white text-xl">${title}</td>
+                                            <td class="text-gray-400">${details}</td>
+                                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">${price}</td>
+                                        `;
+                                        tbody.appendChild(tr);
+                                    }
+                                }
                             }
-                        });
+                        }
                     }
-                }
 
-                alert("تم تحديث كافة بيانات العرض والجدول بنجاح!");
+                    alert("تم تحديث كافة البيانات وجدول الاستثمار بنجاح!");
+                } catch (error) {
+                    console.error(error);
+                    alert("حدث خطأ أثناء القراءة. تأكد من استخدام القالب الصحيح.");
+                }
                 
-                // تفريغ المدخل ليسمح برفع نفس الملف مجدداً بعد تعديله
+                // تفريغ المدخل ليسمح برفع نفس الملف مجدداً
                 document.getElementById('fileInput').value = '';
             };
             reader.readAsArrayBuffer(file);
