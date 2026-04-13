@@ -162,8 +162,52 @@
             filter: brightness(0) invert(1) !important; 
         }
 
+        /* ----------------------------------------------------------- */
+        /* إعدادات الطباعة الصارمة (لحل اختفاء الشريحة 2 و 4) */
+        /* ----------------------------------------------------------- */
         @media print {
-            .no-print, .bottom-trigger-zone { display: none !important; }
+            @page {
+                size: 1280px 720px; /* فرض حجم وتوجيه الورقة */
+                margin: 0;
+            }
+            html, body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background-color: #030303 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .no-print, .bottom-trigger-zone { 
+                display: none !important; 
+            }
+            .slide {
+                width: 1280px !important;
+                height: 720px !important;
+                margin: 0 !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                page-break-after: always !important; 
+                break-inside: avoid !important;
+                break-after: page !important;
+            }
+            
+            /* حل جذري لاختفاء صفحة 2 و 4: متصفح كروم يواجه مشكلة في طباعة backdrop-blur 
+               لذلك نقوم بإلغائه وقت الطباعة واستبداله بلون صلب فخم */
+            .backdrop-blur-xl, .backdrop-blur-2xl {
+                backdrop-filter: none !important;
+                background-color: #0f0f0f !important;
+                border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            }
+            
+            /* تخفيف هالات النيون التي قد تتسبب في تشويش الطبقات وقت الطباعة */
+            .neon-glow-bg {
+                opacity: 0.05 !important;
+            }
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
         }
     </style>
 </head>
@@ -329,7 +373,6 @@
             <div class="grid grid-cols-2 gap-12 flex-grow">
                 <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
                     <div class="flex justify-between items-start mb-12">
-                        <!-- تم إعطاء ID للشعار عشان نحوله لـ Base64 -->
                         <img id="snb-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg" 
                              alt="SNB Logo" class="bank-logo h-12">
                         <span class="text-[10px] font-bold text-gray-600 tracking-widest">SNB BANK</span>
@@ -348,7 +391,6 @@
 
                 <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
                     <div class="flex justify-between items-start mb-12">
-                        <!-- تم إعطاء ID للشعار عشان نحوله لـ Base64 -->
                         <img id="rajhi-logo" src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg" 
                              alt="Al Rajhi Logo" class="bank-logo h-12">
                         <span class="text-[10px] font-bold text-gray-600 tracking-widest">RAJHI BANK</span>
