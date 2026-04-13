@@ -313,6 +313,7 @@
                             <th class="text-left uppercase">القيمة (ر.س)</th>
                         </tr>
                     </thead>
+                    <!-- الجدول سيتم تحديثه برمجياً من الإكسيل -->
                     <tbody id="table-body">
                         <tr>
                             <td class="font-bold text-white text-xl">الهوية البصرية</td>
@@ -429,7 +430,7 @@
 
     <script>
         // ------------------------------------------------------------------------
-        // تحميل الـ SVG برمجياً وتحويله لنص Base64 لكي يظهر غصباً عن الكانفاس
+        // تحميل الـ SVG برمجياً وتحويله لنص Base64 لكي يظهر غصباً عن الكانفاس/الطباعة
         // ------------------------------------------------------------------------
         async function fetchImageAsBase64(url, imgElementId) {
             try {
@@ -446,14 +447,18 @@
         }
 
         window.addEventListener('load', function() {
-            // تحويل الشعارات لـ Base64 فور تحميل الصفحة
             fetchImageAsBase64('https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg', 'snb-logo');
             fetchImageAsBase64('https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg', 'rajhi-logo');
         });
 
-        // 1. تحميل قالب Excel
+        // ------------------------------------------------------------------------
+        // 1. تحميل قالب Excel (تم التحديث ليصبح بـ 2 Sheets)
+        // ------------------------------------------------------------------------
         function downloadExcelTemplate() {
-            const data = [
+            const wb = XLSX.utils.book_new();
+
+            // الورقة الأولى: البيانات الأساسية
+            const generalData = [
                 ["معرّف الحقل", "القيمة", "الوصف"],
                 ["main-title", "عرض سعر استراتيجي", "عنوان الغلاف"],
                 ["client-name", "المحامي بكر صبحي", "اسم العميل"],
@@ -468,13 +473,30 @@
                 ["bank2-iban", "SA90 8000 0044 5612 3400 0099", ""],
                 ["contact-phone", "0565553390", "التواصل"]
             ];
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "بيانات العرض");
+            const wsGeneral = XLSX.utils.aoa_to_sheet(generalData);
+            // توسيع عرض الأعمدة
+            wsGeneral['!cols'] = [{wch: 20}, {wch: 50}, {wch: 30}];
+            XLSX.utils.book_append_sheet(wb, wsGeneral, "البيانات الأساسية");
+
+            // الورقة الثانية: جدول الخدمات الديناميكي
+            const tableData = [
+                ["البند التسويقي", "تفاصيل النطاق والحلول التقنية", "القيمة (ر.س)"],
+                ["الهوية البصرية", "تصميم شعار احترافي + كتيب الهوية الرسمية المتكامل (Brand Guidelines)", "500"],
+                ["إدارة الموقع", "الإشراف الفني، التحديثات الدورية، وحماية الخوادم والبيانات", "700"],
+                ["SEO & الحملات", "تصدر محركات البحث وإدارة حملات Google Ads الاستباقية", "1000"],
+                ["المحتوى المرئي", "إنتاج 10 فيديوهات Reels + إدارة تفاعلية متكاملة للمنصات", "1800"]
+            ];
+            const wsTable = XLSX.utils.aoa_to_sheet(tableData);
+            wsTable['!cols'] = [{wch: 25}, {wch: 70}, {wch: 15}];
+            XLSX.utils.book_append_sheet(wb, wsTable, "تفاصيل الاستثمار");
+
+            // تصدير الملف
             XLSX.writeFile(wb, "Template_AlMona_Advanced.xlsx");
         }
 
-        // 2. تحديث البيانات
+        // ------------------------------------------------------------------------
+        // 2. تحديث البيانات برفع الملف (يقرأ الصفحتين ويبني الجدول برمجياً)
+        // ------------------------------------------------------------------------
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -482,11 +504,15 @@
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                jsonData.forEach(row => {
+                
+                // --------- الجزء الأول: البيانات الأساسية ---------
+                const generalSheetName = workbook.SheetNames.find(name => name.includes("البيانات الأساسية")) || workbook.SheetNames[0];
+                const generalJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[generalSheetName]);
+                
+                generalJsonData.forEach(row => {
                     const id = row["معرّف الحقل"];
                     const val = row["القيمة"];
-                    if (id && val) {
+                    if (id && val !== undefined) {
                         const el = document.getElementById(id);
                         if (el) el.innerText = val;
                         if (id === "savings-val") {
@@ -494,7 +520,40 @@
                         }
                     }
                 });
-                alert("تم تحديث كافة بيانات العرض بنجاح!");
+
+                // --------- الجزء الثاني: تحديث جدول تفاصيل الاستثمار ---------
+                const tableSheetName = workbook.SheetNames.find(name => name.includes("تفاصيل الاستثمار")) || workbook.SheetNames[1];
+                if (tableSheetName && workbook.Sheets[tableSheetName]) {
+                    const tableJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[tableSheetName]);
+                    const tbody = document.getElementById('table-body');
+                    
+                    if (tableJsonData.length > 0) {
+                        tbody.innerHTML = ''; // مسح محتوى الجدول القديم
+                        
+                        tableJsonData.forEach(row => {
+                            // التوافق مع أسماء الأعمدة في الإكسيل
+                            const title = row["البند التسويقي"] || row["البند"] || "";
+                            const details = row["تفاصيل النطاق والحلول التقنية"] || row["التفاصيل"] || "";
+                            const price = row["القيمة (ر.س)"] || row["القيمة"] || row["السعر"] || "";
+                            
+                            // إضافة صف جديد فقط في حال وجود بيانات
+                            if(title || details || price) {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td class="font-bold text-white text-xl">${title}</td>
+                                    <td class="text-gray-400">${details}</td>
+                                    <td class="text-left font-bold text-gold-500 text-2xl text-neon">${price}</td>
+                                `;
+                                tbody.appendChild(tr);
+                            }
+                        });
+                    }
+                }
+
+                alert("تم تحديث كافة بيانات العرض والجدول بنجاح!");
+                
+                // تفريغ المدخل ليسمح برفع نفس الملف مجدداً بعد تعديله
+                document.getElementById('fileInput').value = '';
             };
             reader.readAsArrayBuffer(file);
         }
