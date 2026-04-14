@@ -15,8 +15,6 @@
     
     <!-- مكتبة معالجة البيانات (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,29 +45,19 @@
             overflow-x: hidden;
         }
 
-        /* حاوية الشريحة الخارجية (تسمح بتعديل الارتفاع عند تصغير الشاشة) */
-        .slide-wrapper {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            margin: 40px 0;
-            height: 720px;
-            overflow: hidden;
-        }
-
-        /* الشريحة الأساسية - مقاسها ثابت للحفاظ على جودة الـ PDF */
+        /* حاوية الشريحة - قياس 16:9 */
         .slide {
             width: 1280px;
             height: 720px;
             background: radial-gradient(circle at 50% 50%, #0a0a0a 0%, #030303 100%);
             position: relative;
+            margin: 40px auto;
+            overflow: hidden;
             border: 1px solid rgba(212, 175, 55, 0.15);
             display: flex;
             flex-direction: column;
             padding: 60px 100px;
             box-shadow: 0 0 80px rgba(0,0,0,1);
-            transform-origin: top center;
-            flex-shrink: 0;
         }
 
         /* توهج النيون الثابت */
@@ -122,10 +110,10 @@
             z-index: 9998;
         }
 
-        /* التحكم العائم (مخفي افتراضياً على الكمبيوتر) */
+        /* التحكم العائم (مخفي افتراضياً) */
         #controls {
             position: fixed;
-            bottom: -100px; 
+            bottom: -80px; /* مخفي أسفل الشاشة */
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
@@ -156,19 +144,16 @@
             font-weight: 700;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
             color: white;
             font-size: 13px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .btn-pdf { background: #D4AF37; color: #000; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
         .btn-excel { border: 1px solid #217346; color: #217346; background: rgba(33, 115, 70, 0.05); }
         .btn-upload { border: 1px solid #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
 
         .btn-control:hover { filter: brightness(1.2); }
-        .btn-control:disabled { opacity: 0.7; cursor: not-allowed; }
 
         /* شعارات البنوك */
         .bank-logo {
@@ -178,49 +163,51 @@
         }
 
         /* ----------------------------------------------------------- */
-        /* استجابة الموبايل (Responsive Design) */
+        /* إعدادات الطباعة الصارمة (لحل اختفاء الشريحة 2 و 4) */
         /* ----------------------------------------------------------- */
-        @media (max-width: 1024px) {
-            /* إظهار الأزرار دائماً على الشاشات الصغيرة لتسهيل اللمس */
-            #controls {
-                bottom: 20px;
-                opacity: 1;
-                visibility: visible;
-                flex-wrap: wrap;
-                width: 95%;
-                padding: 15px;
-                border-radius: 25px;
-                gap: 10px;
+        @media print {
+            @page {
+                size: 1280px 720px; /* فرض حجم وتوجيه الورقة */
+                margin: 0;
             }
-            .btn-control {
-                flex: 1 1 calc(50% - 10px);
-                font-size: 12px;
-                padding: 12px;
+            html, body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background-color: #030303 !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
-            /* الزر الثالث يأخذ العرض كاملاً */
-            .btn-pdf { flex: 1 1 100%; } 
+            .no-print, .bottom-trigger-zone { 
+                display: none !important; 
+            }
+            .slide {
+                width: 1280px !important;
+                height: 720px !important;
+                margin: 0 !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                page-break-after: always !important; 
+                break-inside: avoid !important;
+                break-after: page !important;
+            }
             
-            .bottom-trigger-zone { display: none; }
-            .slide-wrapper { margin: 20px 0; }
-        }
-
-        /* ----------------------------------------------------------- */
-        /* وضع "تصوير الشاشة" (لإخفاء الأزرار وإعادة الأبعاد لضبط التصوير) */
-        /* ----------------------------------------------------------- */
-        .capture-mode {
-            background-color: #030303 !important;
-        }
-        .capture-mode .slide-wrapper {
-            margin: 0 !important;
-            height: 720px !important;
-        }
-        .capture-mode .slide {
-            transform: none !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-        .capture-mode::-webkit-scrollbar {
-            display: none;
+            /* حل جذري لاختفاء صفحة 2 و 4: متصفح كروم يواجه مشكلة في طباعة backdrop-blur 
+               لذلك نقوم بإلغائه وقت الطباعة واستبداله بلون صلب فخم */
+            .backdrop-blur-xl, .backdrop-blur-2xl {
+                backdrop-filter: none !important;
+                background-color: #0f0f0f !important;
+                border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            }
+            
+            /* تخفيف هالات النيون التي قد تتسبب في تشويش الطبقات وقت الطباعة */
+            .neon-glow-bg {
+                opacity: 0.05 !important;
+            }
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
         }
     </style>
 </head>
@@ -232,13 +219,10 @@
     <!-- الأزرار -->
     <div id="controls" class="no-print">
         <button onclick="downloadExcelTemplate()" class="btn-control btn-excel">
-            <i class="fa-solid fa-file-excel"></i> القالب
+            <i class="fa-solid fa-file-excel"></i> تحميل القالب
         </button>
         <button onclick="document.getElementById('fileInput').click()" class="btn-control btn-upload">
-            <i class="fa-solid fa-upload"></i> تحديث
-        </button>
-        <button onclick="exportScreenshotsToPDF()" class="btn-control btn-pdf" id="pdf-btn">
-            <i class="fa-solid fa-camera"></i> حفظ سكرين شوت (PDF)
+            <i class="fa-solid fa-upload"></i> تحديث البيانات
         </button>
         <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
     </div>
@@ -246,189 +230,180 @@
     <div id="capture-area">
 
         <!-- الشريحة 1: الغلاف -->
-        <div class="slide-wrapper">
-            <div class="slide flex flex-col justify-center items-center text-center">
-                <div class="neon-glow-bg top-0 left-0"></div>
-                <div class="neon-glow-bg bottom-0 right-0" style="opacity: 0.15;"></div>
+        <div class="slide flex flex-col justify-center items-center text-center">
+            <div class="neon-glow-bg top-0 left-0"></div>
+            <div class="neon-glow-bg bottom-0 right-0" style="opacity: 0.15;"></div>
+            
+            <div class="relative z-10">
+                <div class="mb-14">
+                    <img id="main-logo" src="https://cdn.prod.website-files.com/60635261197822875f187b0b/6101599912ddba5003383e9c_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D9%86%D9%89-19-p-500.png" 
+                         alt="شعار مؤسسة المنى" crossorigin="anonymous" class="w-96 mx-auto drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]">
+                </div>
                 
-                <div class="relative z-10">
-                    <div class="mb-14">
-                        <img id="main-logo" src="https://cdn.prod.website-files.com/60635261197822875f187b0b/6101599912ddba5003383e9c_%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D9%86%D9%89-19-p-500.png" 
-                             alt="شعار مؤسسة المنى" crossorigin="anonymous" class="w-96 mx-auto drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]">
+                <p class="text-gold-500 text-sm font-bold mb-8 uppercase text-neon tracking-[0.9em]" id="sub-title">Excellence In Digital Marketing</p>
+                <h1 class="text-7xl font-black font-heading mb-16 text-neon tracking-tight" id="main-title">عرض سعر استراتيجي</h1>
+                
+                <div class="flex justify-center items-center gap-20 border-t border-gold-500/10 pt-12">
+                    <div class="text-right">
+                        <p class="text-gray-600 text-[11px] uppercase font-bold mb-2 tracking-[0.3em]">Client Name</p>
+                        <p class="text-3xl font-bold text-white font-heading text-neon" id="client-name">المحامي بكر صبحي</p>
                     </div>
-                    
-                    <p class="text-gold-500 text-sm font-bold mb-8 uppercase text-neon tracking-[0.9em]" id="sub-title">Excellence In Digital Marketing</p>
-                    <h1 class="text-7xl font-black font-heading mb-16 text-neon tracking-tight" id="main-title">عرض سعر استراتيجي</h1>
-                    
-                    <div class="flex justify-center items-center gap-20 border-t border-gold-500/10 pt-12">
-                        <div class="text-right">
-                            <p class="text-gray-600 text-[11px] uppercase font-bold mb-2 tracking-[0.3em]">Client Name</p>
-                            <p class="text-3xl font-bold text-white font-heading text-neon" id="client-name">المحامي بكر صبحي</p>
-                        </div>
-                        <div class="w-px h-16 bg-gold-500/30"></div>
-                        <div class="text-right">
-                            <p class="text-gray-600 text-[11px] uppercase font-bold mb-2 tracking-[0.3em]">Proposal Date</p>
-                            <p class="text-3xl font-bold text-white font-heading text-neon" id="proposal-date">أبريل 2026</p>
-                        </div>
+                    <div class="w-px h-16 bg-gold-500/30"></div>
+                    <div class="text-right">
+                        <p class="text-gray-600 text-[11px] uppercase font-bold mb-2 tracking-[0.3em]">Proposal Date</p>
+                        <p class="text-3xl font-bold text-white font-heading text-neon" id="proposal-date">أبريل 2026</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- الشريحة 2: الرؤية الرقمية -->
-        <div class="slide-wrapper">
-            <div class="slide">
-                <div class="neon-glow-bg top-1/2 left-0 -translate-y-1/2 opacity-20"></div>
-                <div class="grid grid-cols-2 gap-16 items-center h-full relative z-10">
-                    <div>
-                        <div class="mb-10">
-                            <div class="flex items-center gap-4 mb-4">
-                                <div class="w-16 h-[2px] bg-gold-500 shadow-[0_0_10px_#D4AF37]"></div>
-                                <span class="text-gold-500 font-bold text-sm uppercase text-neon tracking-[0.4em]">Strategic Vision</span>
-                            </div>
-                            <h2 class="text-6xl font-heading font-black text-white leading-tight">رؤيتنا <br><span class="text-gold-500 text-neon">الرقمية</span></h2>
+        <div class="slide">
+            <div class="neon-glow-bg top-1/2 left-0 -translate-y-1/2 opacity-20"></div>
+            <div class="grid grid-cols-2 gap-16 items-center h-full relative z-10">
+                <div>
+                    <div class="mb-10">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-16 h-[2px] bg-gold-500 shadow-[0_0_10px_#D4AF37]"></div>
+                            <span class="text-gold-500 font-bold text-sm uppercase text-neon tracking-[0.4em]">Strategic Vision</span>
                         </div>
-                        <p class="text-2xl text-gray-400 leading-relaxed font-light mb-12" id="vision-text">
-                            نحن لا نكتفي بتقديم الخدمات، بل نصمم أنظمة نمو متكاملة. في مؤسسة المنى، نعتمد على التحليل المعياري والتنفيذ الإبداعي لخلق بصمة رقمية تليق بهيبة مكاتبكم.
-                        </p>
-                        <div class="grid grid-cols-2 gap-8">
-                            <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px]">
-                                <i class="fa-solid fa-microchip text-gold-500 text-4xl mb-6"></i>
-                                <h4 class="font-bold text-white text-2xl mb-2">تحليل ذكي</h4>
-                                <p class="text-gray-500 text-sm">قياس دقيق لكل خطوة تسويقية.</p>
-                            </div>
-                            <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px]">
-                                <i class="fa-solid fa-wand-magic-sparkles text-gold-500 text-4xl mb-6"></i>
-                                <h4 class="font-bold text-white text-2xl mb-2">إبداع تجريدي</h4>
-                                <p class="text-gray-500 text-sm">تصاميم بصرية بمعايير عالمية.</p>
-                            </div>
+                        <h2 class="text-6xl font-heading font-black text-white leading-tight">رؤيتنا <br><span class="text-gold-500 text-neon">الرقمية</span></h2>
+                    </div>
+                    <p class="text-2xl text-gray-400 leading-relaxed font-light mb-12" id="vision-text">
+                        نحن لا نكتفي بتقديم الخدمات، بل نصمم أنظمة نمو متكاملة. في مؤسسة المنى، نعتمد على التحليل المعياري والتنفيذ الإبداعي لخلق بصمة رقمية تليق بهيبة مكاتبكم.
+                    </p>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px]">
+                            <i class="fa-solid fa-microchip text-gold-500 text-4xl mb-6"></i>
+                            <h4 class="font-bold text-white text-2xl mb-2">تحليل ذكي</h4>
+                            <p class="text-gray-500 text-sm">قياس دقيق لكل خطوة تسويقية.</p>
+                        </div>
+                        <div class="p-8 border border-gold-500/20 bg-white/5 rounded-[30px]">
+                            <i class="fa-solid fa-wand-magic-sparkles text-gold-500 text-4xl mb-6"></i>
+                            <h4 class="font-bold text-white text-2xl mb-2">إبداع تجريدي</h4>
+                            <p class="text-gray-500 text-sm">تصاميم بصرية بمعايير عالمية.</p>
                         </div>
                     </div>
-                    <div class="flex justify-center items-center">
-                        <div class="relative w-[450px] h-[450px]">
-                            <div class="absolute inset-0 border-2 border-gold-500/10 rounded-full"></div>
-                            <div class="absolute inset-10 border border-gold-500/30 rounded-full"></div>
-                            <div class="absolute inset-20 bg-gradient-to-tr from-gold-600/20 via-transparent to-transparent rounded-full flex items-center justify-center backdrop-blur-xl border border-gold-500/50 shadow-[0_0_100px_rgba(212,175,55,0.2)]">
-                                <i class="fa-solid fa-atom text-7xl text-gold-500"></i>
-                            </div>
-                            <div class="absolute top-0 right-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] rotate-45"></div>
-                            <div class="absolute bottom-0 left-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] -rotate-45"></div>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="relative w-[450px] h-[450px]">
+                        <div class="absolute inset-0 border-2 border-gold-500/10 rounded-full"></div>
+                        <div class="absolute inset-10 border border-gold-500/30 rounded-full"></div>
+                        <div class="absolute inset-20 bg-gradient-to-tr from-gold-600/20 via-transparent to-transparent rounded-full flex items-center justify-center backdrop-blur-xl border border-gold-500/50 shadow-[0_0_100px_rgba(212,175,55,0.2)]">
+                            <i class="fa-solid fa-atom text-7xl text-gold-500"></i>
                         </div>
+                        <div class="absolute top-0 right-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] rotate-45"></div>
+                        <div class="absolute bottom-0 left-0 w-32 h-[1px] bg-gold-500 shadow-[0_0_15px_#D4AF37] -rotate-45"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- الشريحة 3: الخدمات -->
-        <div class="slide-wrapper">
-            <div class="slide">
-                <div class="mb-12">
-                    <h2 class="text-5xl font-heading font-black text-white">تفاصيل <span class="text-gold-500 text-neon">الاستثمار</span></h2>
-                </div>
-                <div class="flex-grow overflow-hidden">
-                    <table class="glass-table">
-                        <thead>
-                            <tr>
-                                <th class="text-right uppercase">البند التسويقي</th>
-                                <th class="text-right uppercase">تفاصيل النطاق والحلول التقنية</th>
-                                <th class="text-left uppercase">القيمة (ر.س)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body">
-                            <tr>
-                                <td class="font-bold text-white text-xl">الهوية البصرية</td>
-                                <td class="text-gray-400">تصميم شعار احترافي + كتيب الهوية الرسمية المتكامل (Brand Guidelines)</td>
-                                <td class="text-left font-bold text-gold-500 text-2xl text-neon">500</td>
-                            </tr>
-                            <tr>
-                                <td class="font-bold text-white text-xl">إدارة الموقع</td>
-                                <td class="text-gray-400">الإشراف الفني، التحديثات الدورية، وحماية الخوادم والبيانات</td>
-                                <td class="text-left font-bold text-gold-500 text-2xl text-neon">700</td>
-                            </tr>
-                            <tr>
-                                <td class="font-bold text-white text-xl">SEO & الحملات</td>
-                                <td class="text-gray-400">تصدر محركات البحث وإدارة حملات Google Ads الاستباقية</td>
-                                <td class="text-left font-bold text-gold-500 text-2xl text-neon">1000</td>
-                            </tr>
-                            <tr>
-                                <td class="font-bold text-white text-xl">المحتوى المرئي</td>
-                                <td class="text-gray-400">إنتاج 10 فيديوهات Reels + إدارة تفاعلية متكاملة للمنصات</td>
-                                <td class="text-left font-bold text-gold-500 text-2xl text-neon">1800</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="slide">
+            <div class="mb-12">
+                <h2 class="text-5xl font-heading font-black text-white">تفاصيل <span class="text-gold-500 text-neon">الاستثمار</span></h2>
+            </div>
+            <div class="flex-grow overflow-hidden">
+                <table class="glass-table">
+                    <thead>
+                        <tr>
+                            <th class="text-right uppercase">البند التسويقي</th>
+                            <th class="text-right uppercase">تفاصيل النطاق والحلول التقنية</th>
+                            <th class="text-left uppercase">القيمة (ر.س)</th>
+                        </tr>
+                    </thead>
+                    <!-- الجدول سيتم تحديثه برمجياً من الإكسيل -->
+                    <tbody id="table-body">
+                        <tr>
+                            <td class="font-bold text-white text-xl">الهوية البصرية</td>
+                            <td class="text-gray-400">تصميم شعار احترافي + كتيب الهوية الرسمية المتكامل (Brand Guidelines)</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">500</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-white text-xl">إدارة الموقع</td>
+                            <td class="text-gray-400">الإشراف الفني، التحديثات الدورية، وحماية الخوادم والبيانات</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">700</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-white text-xl">SEO & الحملات</td>
+                            <td class="text-gray-400">تصدر محركات البحث وإدارة حملات Google Ads الاستباقية</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">1000</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-white text-xl">المحتوى المرئي</td>
+                            <td class="text-gray-400">إنتاج 10 فيديوهات Reels + إدارة تفاعلية متكاملة للمنصات</td>
+                            <td class="text-left font-bold text-gold-500 text-2xl text-neon">1800</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <!-- الشريحة 4: الاستثمار النهائي -->
-        <div class="slide-wrapper">
-            <div class="slide justify-center items-center text-center">
-                <div class="neon-glow-bg w-[700px] h-[700px] opacity-10"></div>
-                <div class="relative z-10">
-                    <p class="text-gray-500 font-bold uppercase mb-12 text-sm tracking-[0.5em]">Total Investment Summary</p>
-                    <div class="flex items-center justify-center gap-24">
-                        <div class="opacity-30 transform scale-90">
-                            <p class="text-2xl text-gray-400 mb-2">القيمة الأساسية</p>
-                            <p class="text-6xl font-bold line-through" id="original-total">4,000</p>
-                        </div>
-                        <div class="w-px h-32 bg-gold-500/20 shadow-[0_0_10px_#D4AF37]"></div>
-                        <div class="relative">
-                            <div class="absolute inset-0 bg-gold-500 blur-[60px] opacity-10"></div>
-                            <div class="border-2 border-gold-500/40 px-20 py-12 rounded-[50px] bg-dark-950/50 backdrop-blur-2xl">
-                                <p class="text-gold-500 text-2xl font-bold mb-6 uppercase text-neon tracking-widest">الاستثمار الصافي</p>
-                                <div class="text-[10rem] font-black text-white leading-none mb-4 text-neon" id="net-total">3,500</div>
-                                <p class="text-2xl text-gray-400 font-light">ريال سعودي / شهرياً</p>
-                            </div>
+        <div class="slide justify-center items-center text-center">
+            <div class="neon-glow-bg w-[700px] h-[700px] opacity-10"></div>
+            <div class="relative z-10">
+                <p class="text-gray-500 font-bold uppercase mb-12 text-sm tracking-[0.5em]">Total Investment Summary</p>
+                <div class="flex items-center justify-center gap-24">
+                    <div class="opacity-30 transform scale-90">
+                        <p class="text-2xl text-gray-400 mb-2">القيمة الأساسية</p>
+                        <p class="text-6xl font-bold line-through" id="original-total">4,000</p>
+                    </div>
+                    <div class="w-px h-32 bg-gold-500/20 shadow-[0_0_10px_#D4AF37]"></div>
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-gold-500 blur-[60px] opacity-10"></div>
+                        <div class="border-2 border-gold-500/40 px-20 py-12 rounded-[50px] bg-dark-950/50 backdrop-blur-2xl">
+                            <p class="text-gold-500 text-2xl font-bold mb-6 uppercase text-neon tracking-widest">الاستثمار الصافي</p>
+                            <div class="text-[10rem] font-black text-white leading-none mb-4 text-neon" id="net-total">3,500</div>
+                            <p class="text-2xl text-gray-400 font-light">ريال سعودي / شهرياً</p>
                         </div>
                     </div>
-                    <div class="mt-20 inline-flex items-center gap-6 px-12 py-5 bg-gold-500 text-dark-950 font-black rounded-full shadow-[0_0_50px_rgba(212,175,55,0.5)]" id="savings-box">
-                        <i class="fa-solid fa-crown text-2xl"></i>
-                        <span>قيمة التوفير الممنوحة: 500 ريال</span>
-                    </div>
+                </div>
+                <div class="mt-20 inline-flex items-center gap-6 px-12 py-5 bg-gold-500 text-dark-950 font-black rounded-full shadow-[0_0_50px_rgba(212,175,55,0.5)]" id="savings-box">
+                    <i class="fa-solid fa-crown text-2xl"></i>
+                    <span>قيمة التوفير الممنوحة: 500 ريال</span>
                 </div>
             </div>
         </div>
 
         <!-- الشريحة 5: البيانات البنكية -->
-        <div class="slide-wrapper">
-            <div class="slide">
-                <h2 class="text-5xl font-heading font-black mb-16 text-center text-neon">قنوات <span class="text-gold-500">التحويل المالي</span></h2>
-                
-                <div class="grid grid-cols-2 gap-12 flex-grow">
-                    <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
-                        <div class="flex justify-between items-start mb-12">
-                            <img id="snb-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg" 
-                                 alt="SNB Logo" class="bank-logo h-12">
-                            <span class="text-[10px] font-bold text-gray-600 tracking-widest">SNB BANK</span>
+        <div class="slide">
+            <h2 class="text-5xl font-heading font-black mb-16 text-center text-neon">قنوات <span class="text-gold-500">التحويل المالي</span></h2>
+            
+            <div class="grid grid-cols-2 gap-12 flex-grow">
+                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
+                    <div class="flex justify-between items-start mb-12">
+                        <img id="snb-logo" src="https://upload.wikimedia.org/wikipedia/commons/6/62/Saudi_National_Bank_Logo.svg" 
+                             alt="SNB Logo" class="bank-logo h-12">
+                        <span class="text-[10px] font-bold text-gray-600 tracking-widest">SNB BANK</span>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
+                            <p class="text-3xl font-mono text-white tracking-widest" id="bank1-acc">1188 7332 0001 06</p>
                         </div>
-                        <div class="space-y-6">
-                            <div>
-                                <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
-                                <p class="text-3xl font-mono text-white tracking-widest" id="bank1-acc">1188 7332 0001 06</p>
-                            </div>
-                            <div>
-                                <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
-                                <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank1-iban">SA14 1000 0011 8873 3200 0106</p>
-                            </div>
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
+                            <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank1-iban">SA14 1000 0011 8873 3200 0106</p>
                         </div>
                     </div>
+                </div>
 
-                    <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
-                        <div class="flex justify-between items-start mb-12">
-                            <img id="rajhi-logo" src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg" 
-                                 alt="Al Rajhi Logo" class="bank-logo h-12">
-                            <span class="text-[10px] font-bold text-gray-600 tracking-widest">RAJHI BANK</span>
+                <div class="border border-gold-500/20 p-12 rounded-[45px] bg-gradient-to-br from-white/5 to-transparent">
+                    <div class="flex justify-between items-start mb-12">
+                        <img id="rajhi-logo" src="https://upload.wikimedia.org/wikipedia/commons/f/f1/Al_Rajhi_Bank_Logo.svg" 
+                             alt="Al Rajhi Logo" class="bank-logo h-12">
+                        <span class="text-[10px] font-bold text-gray-600 tracking-widest">RAJHI BANK</span>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
+                            <p class="text-3xl font-mono text-white tracking-widest" id="bank2-acc">4456 1234 0000 99</p>
                         </div>
-                        <div class="space-y-6">
-                            <div>
-                                <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">Account Number</p>
-                                <p class="text-3xl font-mono text-white tracking-widest" id="bank2-acc">4456 1234 0000 99</p>
-                            </div>
-                            <div>
-                                <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
-                                <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank2-iban">SA90 8000 0044 5612 3400 0099</p>
-                            </div>
+                        <div>
+                            <p class="text-gray-600 text-[11px] mb-2 font-bold uppercase tracking-widest">IBAN Code</p>
+                            <p class="text-xl font-mono text-gold-500 tracking-wider" id="bank2-iban">SA90 8000 0044 5612 3400 0099</p>
                         </div>
                     </div>
                 </div>
@@ -436,19 +411,17 @@
         </div>
 
         <!-- الشريحة الأخيرة -->
-        <div class="slide-wrapper">
-            <div class="slide flex flex-col justify-center items-center text-center">
-                <div class="neon-glow-bg w-[800px] h-[800px] opacity-15"></div>
-                <div class="relative z-10">
-                    <i class="fa-solid fa-gem text-9xl text-gold-500/40 mb-12 shadow-neon"></i>
-                    <h2 class="text-7xl font-heading font-black mb-10 text-neon leading-tight">شراكة تصنع <br><span class="text-gold-500">الفارق</span></h2>
-                    <p class="text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-16 font-light italic">
-                        "التزامنا هو تقديم جودة استثنائية تعكس مكانة مكتبكم الموقر."
-                    </p>
-                    <div class="pt-12 border-t border-gold-500/20 w-full max-w-2xl mx-auto">
-                        <p class="text-4xl font-bold text-white mb-3 text-neon" id="contact-phone">0565553390</p>
-                        <p class="text-gold-500 uppercase text-[11px] font-bold tracking-[0.8em]">Official Liaison</p>
-                    </div>
+        <div class="slide flex flex-col justify-center items-center text-center">
+            <div class="neon-glow-bg w-[800px] h-[800px] opacity-15"></div>
+            <div class="relative z-10">
+                <i class="fa-solid fa-gem text-9xl text-gold-500/40 mb-12 shadow-neon"></i>
+                <h2 class="text-7xl font-heading font-black mb-10 text-neon leading-tight">شراكة تصنع <br><span class="text-gold-500">الفارق</span></h2>
+                <p class="text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed mb-16 font-light italic">
+                    "التزامنا هو تقديم جودة استثنائية تعكس مكانة مكتبكم الموقر."
+                </p>
+                <div class="pt-12 border-t border-gold-500/20 w-full max-w-2xl mx-auto">
+                    <p class="text-4xl font-bold text-white mb-3 text-neon" id="contact-phone">0565553390</p>
+                    <p class="text-gold-500 uppercase text-[11px] font-bold tracking-[0.8em]">Official Liaison</p>
                 </div>
             </div>
         </div>
@@ -457,43 +430,7 @@
 
     <script>
         // ------------------------------------------------------------------------
-        // التصغير الذكي للموبايل والشاشات (Smart Scaling System)
-        // ------------------------------------------------------------------------
-        function adjustScaleForMobile() {
-            // لا تقم بالتصغير أثناء التقاط الصورة
-            if (document.body.classList.contains('capture-mode')) return;
-
-            const wrappers = document.querySelectorAll('.slide-wrapper');
-            const slides = document.querySelectorAll('.slide');
-            const screenWidth = window.innerWidth;
-
-            // إذا كانت الشاشة أصغر من عرض الشريحة (1280px + هوامش)
-            if (screenWidth < 1320) {
-                // نترك 20 بكسل هامش من كل جانب (إجمالي 40)
-                const scaleValue = (screenWidth - 40) / 1280;
-                
-                slides.forEach(slide => {
-                    slide.style.transform = `scale(${scaleValue})`;
-                });
-                
-                // تعديل ارتفاع الحاوية لتجنب الفراغات البيضاء أسفل كل شريحة
-                wrappers.forEach(wrapper => {
-                    wrapper.style.height = `${720 * scaleValue}px`;
-                });
-            } else {
-                // إعادة الوضع الطبيعي للشاشات الكبيرة
-                slides.forEach(slide => slide.style.transform = 'none');
-                wrappers.forEach(wrapper => wrapper.style.height = '720px');
-            }
-        }
-
-        // تشغيل نظام التصغير فوراً وعند تغيير مقاس الشاشة
-        window.addEventListener('resize', adjustScaleForMobile);
-        window.addEventListener('load', adjustScaleForMobile);
-
-
-        // ------------------------------------------------------------------------
-        // تحميل الـ SVG برمجياً وتحويله لنص Base64 لكي يظهر غصباً عن الكانفاس
+        // تحميل الـ SVG برمجياً وتحويله لنص Base64 لكي يظهر غصباً عن الكانفاس/الطباعة
         // ------------------------------------------------------------------------
         async function fetchImageAsBase64(url, imgElementId) {
             try {
@@ -520,6 +457,7 @@
         function downloadExcelTemplate() {
             const wb = XLSX.utils.book_new();
 
+            // الورقة الأولى: البيانات الأساسية
             const generalData = [
                 ["معرّف الحقل", "القيمة", "الوصف"],
                 ["main-title", "عرض سعر استراتيجي", "عنوان الغلاف"],
@@ -536,9 +474,11 @@
                 ["contact-phone", "0565553390", "التواصل"]
             ];
             const wsGeneral = XLSX.utils.aoa_to_sheet(generalData);
+            // توسيع عرض الأعمدة
             wsGeneral['!cols'] = [{wch: 20}, {wch: 50}, {wch: 30}];
             XLSX.utils.book_append_sheet(wb, wsGeneral, "البيانات الأساسية");
 
+            // الورقة الثانية: جدول الخدمات الديناميكي
             const tableData = [
                 ["البند التسويقي", "تفاصيل النطاق والحلول التقنية", "القيمة (ر.س)"],
                 ["الهوية البصرية", "تصميم شعار احترافي + كتيب الهوية الرسمية المتكامل (Brand Guidelines)", "500"],
@@ -550,11 +490,12 @@
             wsTable['!cols'] = [{wch: 25}, {wch: 70}, {wch: 15}];
             XLSX.utils.book_append_sheet(wb, wsTable, "تفاصيل الاستثمار");
 
+            // تصدير الملف
             XLSX.writeFile(wb, "Template_AlMona_Advanced.xlsx");
         }
 
         // ------------------------------------------------------------------------
-        // 2. تحديث البيانات برفع الملف
+        // 2. تحديث البيانات برفع الملف (يقرأ الشيت الأول للبيانات، والشيت الثاني للجدول)
         // ------------------------------------------------------------------------
         function handleFileUpload(event) {
             const file = event.target.files[0];
@@ -565,19 +506,24 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     
+                    // --- قراءة الشيت الأول (البيانات الأساسية) ---
                     if (workbook.SheetNames.length > 0) {
                         const sheet1Name = workbook.SheetNames[0];
+                        // قراءة البيانات كمصفوفة من المصفوفات لتجنب مشاكل مسافات أسماء الأعمدة في الإكسيل
                         const sheet1Data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet1Name], {header: 1});
                         
+                        // نتخطى الصف الأول (العناوين) ونقرأ الباقي
                         for (let i = 1; i < sheet1Data.length; i++) {
                             const row = sheet1Data[i];
                             if (row && row.length >= 2) {
-                                const id = row[0]; 
-                                const val = row[1]; 
+                                const id = row[0]; // العمود الأول: معرّف الحقل
+                                const val = row[1]; // العمود الثاني: القيمة
                                 
                                 if (id && val !== undefined) {
                                     const el = document.getElementById(id);
-                                    if (el) el.innerText = val;
+                                    if (el) {
+                                        el.innerText = val;
+                                    }
                                     if (id === "savings-val") {
                                         const savingsBox = document.getElementById('savings-box');
                                         if (savingsBox) {
@@ -589,21 +535,24 @@
                         }
                     }
 
+                    // --- قراءة الشيت الثاني (جدول تفاصيل الاستثمار) ---
                     if (workbook.SheetNames.length > 1) {
                         const sheet2Name = workbook.SheetNames[1];
                         const sheet2Data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet2Name], { header: 1 });
                         
                         if (sheet2Data.length > 1) { 
                             const tbody = document.getElementById('table-body');
-                            tbody.innerHTML = ''; 
+                            tbody.innerHTML = ''; // مسح محتوى الجدول القديم بالكامل
                             
+                            // اللوب يبدأ من 1 لتخطي صف عناوين الجدول
                             for (let i = 1; i < sheet2Data.length; i++) {
                                 const row = sheet2Data[i];
                                 if (row && row.length > 0) {
-                                    const title = row[0] || "";     
-                                    const details = row[1] || "";   
-                                    const price = row[2] || "";     
+                                    const title = row[0] || "";     // العمود الأول
+                                    const details = row[1] || "";   // العمود الثاني
+                                    const price = row[2] || "";     // العمود الثالث
                                     
+                                    // التأكد من وجود أي بيانات قبل إضافة الصف
                                     if(title || details || price) {
                                         const tr = document.createElement('tr');
                                         tr.innerHTML = `
@@ -624,75 +573,10 @@
                     alert("حدث خطأ أثناء القراءة. تأكد من استخدام القالب الصحيح.");
                 }
                 
+                // تفريغ المدخل ليسمح برفع نفس الملف مجدداً
                 document.getElementById('fileInput').value = '';
             };
             reader.readAsArrayBuffer(file);
-        }
-
-        // ------------------------------------------------------------------------
-        // 3. التصوير الدقيق (السكرين شوت الطويلة أو لكل شريحة)
-        // ------------------------------------------------------------------------
-        async function exportScreenshotsToPDF() {
-            const btn = document.getElementById('pdf-btn');
-            const originalContent = btn.innerHTML;
-            
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التقاط الصور...';
-            btn.disabled = true;
-
-            // إخفاء الأزرار وتهيأة الوضع للتصوير
-            document.body.classList.add('capture-mode');
-            document.getElementById('controls').style.display = 'none';
-
-            // إلغاء التصغير مؤقتاً لضمان التقاط الشريحة بجودة 1280x720 الكاملة
-            const slides = document.querySelectorAll('.slide');
-            const wrappers = document.querySelectorAll('.slide-wrapper');
-            slides.forEach(slide => slide.style.transform = 'none');
-            wrappers.forEach(wrapper => wrapper.style.height = '720px');
-
-            // مهلة لتحديث الشاشة قبل التصوير
-            await new Promise(resolve => setTimeout(resolve, 500)); 
-
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [1280, 720]
-            });
-
-            for (let i = 0; i < slides.length; i++) {
-                const slide = slides[i];
-                
-                // التمرير للشريحة لضمان تحميلها
-                slide.scrollIntoView({ behavior: 'instant', block: 'start' });
-                await new Promise(resolve => setTimeout(resolve, 200)); 
-                
-                // تصوير الشريحة (Screenshot)
-                const canvas = await html2canvas(slide, {
-                    scale: 2, // دقة مضاعفة
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#030303',
-                    logging: false,
-                    width: 1280,
-                    height: 720
-                });
-                
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                
-                if (i > 0) pdf.addPage([1280, 720], 'landscape');
-                pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
-            }
-
-            const clientName = document.getElementById('client-name').innerText;
-            pdf.save(`AlMona_Proposal_${clientName}_Screenshots.pdf`);
-
-            // إعادة الصفحة للوضع الطبيعي وتفعيل الأزرار والتصغير
-            document.body.classList.remove('capture-mode');
-            document.getElementById('controls').style.display = '';
-            adjustScaleForMobile(); // تفعيل تصغير الشاشة من جديد إذا كان يتم استخدامه على الموبايل
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
         }
     </script>
 
